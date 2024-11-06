@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NotebookLM Vodcast Sidecar</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to external CSS file -->
+    <script src="client.js" defer></script> <!-- Only client.js is now responsible for sync function -->
+</head>
+<body>
+    <div class="main-container">
+        <h1>NotebookLM Simli Sidecar</h1>
+
+        <!-- File Upload and Diarization Control -->
+        <div>
+            <input type="file" id="audioFile" accept="audio/*">
+            <button onclick="startDiarization()">Start Diarization</button>
+            <div id="diarizationStatus">Select Podcast file for replay...</div>
+        </div>
+
+        <!-- Avatar Display -->
+        <div class="avatar-container">
+            <div class="avatar">
+                <video id="video2" autoplay playsinline></video>
+                <audio id="audio2"></audio>
+            </div>
+            <div class="avatar">
+                <video id="video1" autoplay playsinline></video>
+                <audio id="audio1"></audio>
+            </div>
+        </div>
+
+        <!-- Status Indicators -->
+        <div class="status-container">
+            <div id="spinner" class="spinner" style="display: none;">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+            </div>
+          
+            <div class="status-box" id="avatarStatus1">Avatar 1: Not Ready</div>
+            <div class="status-box" id="avatarStatus2">Avatar 2: Not Ready</div>
+        </div>
+
+        <!-- Original Individual Avatar Controls (Hidden) -->
+        <div class="original-controls">
+            <div>
+                <button id="startBothAvatars">Start Both Avatars (Both must start)</button>
+                <button id="playBothAvatars">Play the Vodcast</button>
+            </div>
+        </div>
+
+        <!-- New Combined Avatar Controls (Visible) -->
+        <div class="controls">
+            <div>
+                <button id="combinedPlayButton">Start Playback</button>
+                <button id="stopPlayback">Stop Playback</button>
+                <button id="syncButton">Make Video</button>
+            </div>
+        </div>
+
+        <!-- Sync Status Message -->
+        <div id="syncStatus" style="text-align: center; color: lightgreen; margin-top: 15px;"></div>
+
+        <!-- Log Section -->
+        <!-- <div class="log-section" id="data-channel"></div> -->
+    </div>
+
+    <script>
+        async function startDiarization() {
+            const fileInput = document.getElementById("audioFile");
+            const statusDiv = document.getElementById("diarizationStatus");
+
+            if (fileInput.files.length === 0) {
+                statusDiv.textContent = "Please select a file to process.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("audio", file);
+
+            statusDiv.textContent = "Processing...";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8080/diarize_audio", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    statusDiv.textContent = "Diarization complete. Check server for results.";
+                } else {
+                    const errorData = await response.json();
+                    statusDiv.textContent = `Error: ${errorData.detail}`;
+                }
+            } catch (error) {
+                console.error("Diarization error:", error);
+                statusDiv.textContent = "Error processing audio.";
+            }
+        }
+    </script>
+</body>
+</html>
